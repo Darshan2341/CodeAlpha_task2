@@ -1,0 +1,64 @@
+import yfinance as yf
+
+class StockPortfolio:
+    def __init__(self):
+        self.portfolio = {}
+    
+    def add_stock(self, ticker, shares, price_per_share):
+        if ticker in self.portfolio:
+            self.portfolio[ticker]['shares'] += shares
+        else:
+            self.portfolio[ticker] = {
+                'shares': shares,
+                'price_per_share': price_per_share
+            }
+    
+    def remove_stock(self, ticker, shares):
+        if ticker in self.portfolio:
+            if self.portfolio[ticker]['shares'] >= shares:
+                self.portfolio[ticker]['shares'] -= shares
+                if self.portfolio[ticker]['shares'] == 0:
+                    del self.portfolio[ticker]
+            else:
+                print(f"Not enough shares of {ticker} to remove.")
+        else:
+            print(f"{ticker} not found in portfolio.")
+    
+    def get_stock_price(self, ticker):
+        stock = yf.Ticker(ticker)
+        stock_info = stock.history(period="1d")
+        return stock_info["Close"][0]
+
+    def calculate_portfolio_value(self):
+        total_value = 0
+        total_cost_basis = 0
+        for ticker, data in self.portfolio.items():
+            stock_price = self.get_stock_price(ticker)
+            stock_value = stock_price * data['shares']
+            total_value += stock_value
+            cost_basis = data['price_per_share'] * data['shares']
+            total_cost_basis += cost_basis
+            profit_loss = stock_value - cost_basis
+            print(f"{ticker}: {data['shares']} shares @ ${stock_price:.2f} = ${stock_value:.2f}, Cost Basis = ${cost_basis:.2f}, P/L = ${profit_loss:.2f}")
+        
+        portfolio_profit_loss = total_value - total_cost_basis
+        print(f"Total Portfolio Value: ${total_value:.2f}")
+        print(f"Total Portfolio Cost Basis: ${total_cost_basis:.2f}")
+        print(f"Total Portfolio Profit/Loss: ${portfolio_profit_loss:.2f}")
+
+# Example usage
+portfolio = StockPortfolio()
+
+# Adding stocks to the portfolio with cost price
+portfolio.add_stock("AAPL", 10, 150.00)  # 10 shares of Apple at $150 each
+portfolio.add_stock("GOOGL", 5, 2800.00)  # 5 shares of Google at $2800 each
+portfolio.add_stock("AMZN", 2, 3500.00)   # 2 shares of Amazon at $3500 each
+portfolio.add_stock("TSLA", 3, 700.00)    # 3 shares of Tesla at $700 each
+
+# Display portfolio value and performance
+portfolio.calculate_portfolio_value()
+
+# Removing stocks and recalculating
+portfolio.remove_stock("TSLA", 1)  # Sell 1 share of Tesla
+portfolio.calculate_portfolio_value()
+
